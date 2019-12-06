@@ -138,7 +138,7 @@ $__System.register('6', ['3', '4', '5'], function (_export) {
 	// DOM
 	'use strict';
 
-	var $, lg, _, $reviewCarousel, $review, $reviewReadMore, $filterButton, $reviewContentRow, $reviewFilters, review_expanded, review_carousel_scrolling, filters_open;
+	var $, lg, _, $reviewCarousel, $review, $reviewReadMore, $filterButton, $reviewContentRow, $reviewFilters, review_expanded, review_carousel_scrolling, filters_open, touch_x_start, touch_x_end, lastMove;
 
 	// =======================================================================================
 	// FUNCTIONS
@@ -165,13 +165,22 @@ $__System.register('6', ['3', '4', '5'], function (_export) {
 		});
 		review_expanded = 0;
 	}
-	// ----------------- OPEN FREE GIFT -----------------
+	// ----------------- TIMER TO CLOSE REVIEW -----------------
+	function timer_to_close_review() {
+		clearTimeout(review_carousel_scrolling);
+		review_carousel_scrolling = setTimeout(function () {
+			if (review_expanded) {
+				collapseReviews();
+			}
+		}, 600);
+	}
+	// ----------------- OPEN FILTER -----------------
 	function open_filters() {
 		$filterButton.addClass('active');
 		$reviewContentRow.addClass('expanded');
 		//$reviewFilters.css({'height': $reviewFilters.find('.filters').outerHeight()});
 	}
-	// ----------------- CLOSE FREE GIFT -----------------
+	// ----------------- CLOSE FILTER -----------------
 	function close_filters() {
 		$filterButton.removeClass('active');
 		$reviewContentRow.removeClass('expanded');
@@ -200,16 +209,21 @@ $__System.register('6', ['3', '4', '5'], function (_export) {
 			review_expanded = 0;
 			review_carousel_scrolling = undefined;
 			filters_open = 0;
+			touch_x_start = undefined;
+			touch_x_end = undefined;
+			lastMove = null;
+
 			$reviewReadMore.on('click', function () {
 				expandReview($(this));
 			});
-			$reviewCarousel.on('scroll', function () {
-				clearTimeout(review_carousel_scrolling);
-				review_carousel_scrolling = setTimeout(function () {
-					if (review_expanded) {
-						collapseReviews();
-					}
-				}, 120);
+			$reviewCarousel.on('touchstart', function (e) {
+				touch_x_start = e.originalEvent.touches[0].pageX;
+			}).on('touchend', function (e) {
+				touch_x_end = e.originalEvent.changedTouches[0].pageX;
+				var diff = Math.abs(touch_x_start - touch_x_end);
+				if (diff > 90) {
+					timer_to_close_review();
+				}
 			});
 			$filterButton.on('click', function () {
 				if (filters_open === 0) {
